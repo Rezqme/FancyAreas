@@ -1,236 +1,263 @@
-# FancyAreas
+# FancyAreas - macOS Window Management Application
 
-A powerful macOS window management tool that lets you snap windows into predefined zones using drag-and-drop with modifier keys.
+A powerful macOS window management application built with Swift and SwiftUI that enables zone-based window snapping and layout management.
 
 ## Features
 
-### Core Capabilities
-- **Zone-Based Window Snapping**: Define custom zones and snap windows by dragging with modifier keys
-- **Multi-Monitor Support**: Full support for multiple displays with independent zone layouts
-- **Visual Zone Overlay**: See your zones highlighted when dragging windows
-- **Smooth Animations**: Buttery-smooth 60fps window animations (respects Reduce Motion)
-- **Template Library**: 10 built-in zone templates (2-column, 3-column, grid layouts, ultrawide, etc.)
-- **Keyboard Shortcuts**: Quick layout switching with Cmd+Opt+1-0
-- **App Restoration**: Save app positions and restore them automatically
-
-### Advanced Features
-- **iCloud Sync**: Sync your preferences across all your Macs
-- **Custom Layouts**: Create up to 10 custom layouts per machine
-- **Layout Switching**: Quickly switch between different zone configurations
-- **Monitor Detection**: Automatically detects display changes and adjusts layouts
-- **Performance Optimized**: Sub-millisecond zone detection with spatial grid algorithm
-- **Accessibility Support**: Full VoiceOver support and keyboard navigation
+- **Zone-Based Window Snapping**: Define custom zones on your displays and snap windows to them with keyboard modifiers
+- **Layout Management**: Save up to 10 different zone layouts and switch between them instantly
+- **Multi-Monitor Support**: Configure independent zones for each display
+- **Application Restoration**: Save not just zones, but which apps go in which zones
+- **iCloud Sync**: Sync your layouts and preferences across all your Macs
+- **Menu Bar Integration**: Quick access to all layouts from the menu bar
+- **Keyboard Shortcuts**: Fast layout switching with customizable shortcuts
 
 ## System Requirements
 
 - macOS 11.0 (Big Sur) or later
-- Apple Silicon or Intel Mac
-- Accessibility permissions required
-- Screen Recording permissions required (for window drag detection)
-
-## Installation
-
-### Manual Installation
-
-1. Download the latest release from the [Releases](https://github.com/your-org/FancyAreas/releases) page
-2. Unzip the downloaded file
-3. Drag **FancyAreas.app** to your Applications folder
-4. Launch FancyAreas from your Applications folder
-
-### Building from Source
-
-```bash
-git clone https://github.com/your-org/FancyAreas.git
-cd FancyAreas/FancyAreas
-swift build -c release
-# Or open Package.swift in Xcode
-```
-
-### First Launch
-
-When you first launch FancyAreas, you'll see a setup wizard that guides you through:
-
-1. **Accessibility Permission**: Required to control window positions
-   - Click "Open System Preferences"
-   - Enable FancyAreas in the Accessibility list
-
-2. **Screen Recording Permission**: Required to detect window dragging
-   - Click "Open System Preferences"
-   - Enable FancyAreas in the Screen Recording list
-
-3. **Launch on Login**: Optionally set FancyAreas to start automatically
-
-After granting permissions, you may need to restart the app.
-
-## Quick Start Guide
-
-### 1. Create Your First Layout
-
-1. Click the FancyAreas menu bar icon
-2. Select **"Manage Layouts..."**
-3. Click the **"+"** button to create a new layout
-4. Choose a template from the Template Library (or create custom zones)
-5. Name your layout (e.g., "Coding Setup")
-6. Click **"Save"**
-
-### 2. Activate a Layout
-
-1. Click the FancyAreas menu bar icon
-2. Select your layout from the menu
-3. The layout is now active and ready to use
-
-### 3. Snap Windows to Zones
-
-1. Start dragging any window
-2. Hold the modifier key (default: **Command ⌘**)
-3. The zone overlay appears showing available zones
-4. Drag the window over a zone (it highlights green)
-5. Release the mouse button to snap the window
-
-That's it! Your window is now perfectly positioned in the zone.
-
-## Documentation
-
-For comprehensive documentation, see:
-
-- **[User Guide](docs/USER_GUIDE.md)**: Detailed feature documentation
-- **[Architecture Guide](docs/ARCHITECTURE.md)**: Developer documentation
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Common issues and solutions
-- **[Keyboard Shortcuts](docs/SHORTCUTS.md)**: Complete shortcut reference
-
-## Keyboard Shortcuts
-
-### Layout Switching
-- **Cmd+Opt+1** through **Cmd+Opt+0**: Switch to layout 1-10
-- **Cmd+Opt+Shift+L**: Open Layout Management window
-
-### Application
-- **Cmd+,** (Cmd+Comma): Open Preferences
-
-### Window Snapping
-- **Cmd** (default): Show zone overlay while dragging (configurable)
+- Apple Silicon or Intel processor (Universal Binary)
+- Accessibility permission (for window management)
+- Screen Recording permission (for overlay display)
 
 ## Project Structure
 
 ```
 FancyAreas/
-├── FancyAreas/              # Main application code
-│   ├── Models/              # Data models (Layout, Zone, Display, etc.)
-│   ├── Controllers/         # Business logic controllers
-│   ├── Views/               # SwiftUI/AppKit views
-│   ├── Utilities/           # Helper classes
-│   └── Resources/           # Assets and Info.plist
-├── FancyAreasTests/         # Unit, integration, and performance tests
-├── docs/                    # Documentation
-├── Package.swift            # Swift Package Manager config
-└── README.md               # This file
+├── FancyAreasApp.swift          # Main app entry point
+├── Info.plist                   # App configuration
+├── Package.swift                # Swift Package Manager configuration
+├── Models/                      # Data models
+│   ├── Layout.swift
+│   ├── Zone.swift
+│   ├── MonitorConfiguration.swift
+│   ├── AssignedApp.swift
+│   └── GridSettings.swift
+├── Views/                       # SwiftUI and AppKit views
+│   ├── FirstRunSetupView.swift
+│   ├── PreferencesView.swift
+│   ├── LayoutManagementWindow.swift
+│   └── ZoneOverlayWindow.swift
+├── Controllers/                 # Managers and controllers
+│   ├── PermissionsManager.swift
+│   ├── MenuBarController.swift
+│   ├── ZoneManager.swift
+│   ├── WindowDragMonitor.swift
+│   ├── WindowSnapController.swift
+│   ├── WindowSnapper.swift
+│   ├── LayoutController.swift
+│   ├── AppRestoration.swift
+│   ├── PreferencesManager.swift
+│   ├── KeyboardShortcutManager.swift
+│   ├── NotificationManager.swift
+│   └── ErrorManager.swift
+├── Utilities/                   # Helper classes and extensions
+│   ├── LayoutFileManager.swift
+│   ├── LaunchOnLoginManager.swift
+│   ├── AccessibilityHelper.swift
+│   └── TemplateLibrary.swift
+└── FancyAreasTests/            # Unit and integration tests
+    ├── ModelTests.swift
+    ├── LayoutFileManagerTests.swift
+    ├── ZoneManagerTests.swift
+    ├── PerformanceTests.swift
+    └── IntegrationTests.swift
+docs/                            # Documentation
+README.md                        # This file
 ```
+
+## Building
+
+This project uses Swift Package Manager:
+
+```bash
+swift build
+swift run
+```
+
+For Xcode:
+```bash
+open Package.swift
+```
+
+## Permissions Setup
+
+FancyAreas requires the following permissions:
+
+1. **Accessibility**: System Preferences > Security & Privacy > Privacy > Accessibility
+2. **Screen Recording**: System Preferences > Security & Privacy > Privacy > Screen Recording
+3. **Automation**: Granted automatically when controlling specific applications
 
 ## Development Status
 
-**Current Status**: Core implementation complete (Tasks 1-30 of 32)
+**Current Progress**: 7 of 32 tasks completed (22%)
 
-### ✅ Completed Features
-- Core data models with Codable support
-- File management system (.fancyareas format)
-- Permission management with first-run wizard
-- Menu bar integration
-- Launch on login functionality
-- Zone detection with spatial grid optimization (<1ms)
-- Window drag event monitoring with CGEventTap
-- Zone overlay display system
-- Window snapping engine with smooth animations
-- Preferences window with iCloud sync
-- Layout management UI (three-panel design)
-- Template library with 10 built-in templates
-- Multi-monitor support with display detection
-- App restoration system
-- Keyboard shortcuts system
-- Error handling and logging
-- User notifications with toast UI
-- Performance optimization
-- Accessibility support (VoiceOver, keyboard navigation)
-- Comprehensive test suite
+### ✅ Completed Tasks
 
-### 📋 Planned Enhancements
-- Additional zone templates
-- Cloud layout syncing (iCloud Drive)
-- Custom keyboard shortcuts
-- Zone color customization
-- Advanced grid editor
-- Window history/undo
-- Scriptable API
+#### Foundation (Tasks 1-3)
+- ✅ **Task 1**: macOS application project structure
+  - Swift Package Manager setup
+  - Universal binary support (Apple Silicon + Intel)
+  - Menu bar app architecture
+  - Project organization with MVC pattern
 
-## Contributing
+- ✅ **Task 2**: Core data models
+  - `Layout` model with zones and apps support
+  - `Zone` model with CGRect bounds and app assignments
+  - `MonitorConfiguration` and `Display` models
+  - `AssignedApp` model for application restoration
+  - `GridSettings` model with validation
+  - Full Codable protocol support for JSON serialization
+  - Comprehensive unit tests
 
-We welcome contributions! Here's how to get started:
+- ✅ **Task 3**: File management system
+  - `LayoutFileManager` for saving/loading .fancyareas files
+  - Local storage: ~/Library/Application Support/FancyAreas/Layouts/
+  - iCloud Drive support preparation
+  - 10 layout maximum enforcement
+  - File validation and integrity checking
+  - Error handling for common scenarios
+  - Unit tests for file operations
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+#### Permissions & System Integration (Tasks 4-6)
+- ✅ **Task 4**: Permission management
+  - `PermissionsManager` for system permissions
+  - Accessibility permission check and request
+  - Screen Recording permission check and request
+  - First-run setup wizard (SwiftUI)
+  - Clear permission explanations
+  - Direct links to System Preferences
+  - Graceful degradation when permissions missing
 
-Please ensure your code:
-- Follows Swift style guidelines
-- Includes appropriate tests
-- Updates documentation as needed
+- ✅ **Task 5**: Menu bar integration
+  - `MenuBarController` for dynamic menu management
+  - Layout list with type badges (zones-only ▢ vs zones+apps ▣)
+  - Monitor configuration badges
+  - Active layout indication with checkmark
+  - Keyboard shortcuts (Cmd+Opt+1-0)
+  - Dynamic menu updates
+  - Icon states: normal, active, no-layout
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+- ✅ **Task 6**: Launch on login
+  - `LaunchOnLoginManager` implementation
+  - Modern ServiceManagement API support (macOS 13+)
+  - Legacy SMLoginItemSetEnabled support (macOS 11-12)
+  - Enable/disable functionality
+  - Status checking and descriptions
+  - Error handling
 
-## Support
+#### Zone System Core (Task 7)
+- ✅ **Task 7**: Zone detection and tracking
+  - `ZoneManager` for active layout management
+  - Fast zone detection using spatial grid optimization
+  - O(1) zone lookup for real-time performance
+  - Zone cache indexed by display ID
+  - Distance-based nearby zone finding
+  - Layout validation
+  - Performance: <1ms zone detection
+  - Comprehensive test suite with benchmarks
 
-### Getting Help
+### 🚧 Remaining Tasks (25)
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/your-org/FancyAreas/issues)
-- **Discussions**: [Ask questions and share tips](https://github.com/your-org/FancyAreas/discussions)
-- **Documentation**: Check the [docs](docs/) folder
+#### Zone System Core (Tasks 8-10)
+- ⏳ Task 8: Window drag event monitoring
+- ⏳ Task 9: Zone overlay display system
+- ⏳ Task 10: Window snapping engine
 
-### Before Reporting Issues
+#### Preferences & Settings (Tasks 11-12)
+- ⏳ Task 11: Preferences window with General tab
+- ⏳ Task 12: Preferences data management
 
-1. Check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-2. Verify you're running the latest version
-3. Confirm permissions are granted (Accessibility + Screen Recording)
-4. Check the log file: `~/Library/Logs/FancyAreas/app.log`
+#### Layout Management UI (Tasks 13-15)
+- ⏳ Task 13: Layout management window
+- ⏳ Task 14: New layout creation flow
+- ⏳ Task 15: Layout editing functionality
 
-## FAQ
+#### Zone Editor (Tasks 16-17)
+- ⏳ Task 16: Zone editor interface
+- ⏳ Task 17: Application picker dialog
 
-**Q: Does FancyAreas work with multiple monitors?**
-A: Yes! Full multi-monitor support with independent zones per display.
+#### Layout Application & Restoration (Tasks 18-20)
+- ⏳ Task 18: Layout activation (zones only)
+- ⏳ Task 19: App restoration (zones + apps)
+- ⏳ Task 20: Non-destructive window management
 
-**Q: How many zones can I create?**
-A: Up to 100 zones per layout, though 2-9 zones is optimal for usability.
+#### Multi-Monitor Support (Tasks 21-22)
+- ⏳ Task 21: Monitor detection & configuration
+- ⏳ Task 22: Per-display zone management
 
-**Q: Can I use FancyAreas with full-screen apps?**
-A: No, macOS full-screen apps cannot be resized. Exit full-screen mode first.
+#### Advanced Features (Tasks 23-25)
+- ⏳ Task 23: Keyboard shortcuts system
+- ⏳ Task 24: iCloud sync implementation
+- ⏳ Task 25: Layout templates library
 
-**Q: Does FancyAreas collect any data?**
-A: No. FancyAreas runs entirely locally. iCloud sync (if enabled) only syncs preferences through your private iCloud account.
+#### Polish & Error Handling (Tasks 26-30)
+- ⏳ Task 26: Error handling & logging
+- ⏳ Task 27: Notifications & user feedback
+- ⏳ Task 28: Performance optimization
+- ⏳ Task 29: Accessibility features
+- ⏳ Task 30: Testing & QA
 
-**Q: Is FancyAreas compatible with other window managers?**
-A: FancyAreas can coexist with other tools, but using multiple simultaneously may cause conflicts.
+#### Documentation & Deployment (Tasks 31-32)
+- ⏳ Task 31: User documentation
+- ⏳ Task 32: Code documentation
 
-See the [User Guide](docs/USER_GUIDE.md) for more FAQs.
+## Architecture
+
+### Core Components
+
+**Models** (`Models/`)
+- Data structures with Codable support
+- Layout, Zone, MonitorConfiguration, AssignedApp, GridSettings
+- Full JSON serialization/deserialization
+
+**Controllers** (`Controllers/`)
+- `PermissionsManager`: System permission handling
+- `MenuBarController`: Menu bar UI and layout switching
+- `ZoneManager`: Zone detection and spatial indexing
+- `WindowDragMonitor`: Window drag event monitoring
+- `WindowSnapController`: Window snapping orchestration
+- `WindowSnapper`: Low-level window positioning
+- `LayoutController`: Layout activation and management
+- `AppRestoration`: Application window restoration
+- `PreferencesManager`: User preferences management
+- `KeyboardShortcutManager`: Keyboard shortcut handling
+- `NotificationManager`: User notifications
+- `ErrorManager`: Error handling and logging
+
+**Utilities** (`Utilities/`)
+- `LayoutFileManager`: File I/O and storage management
+- `LaunchOnLoginManager`: System startup integration
+- `AccessibilityHelper`: Accessibility API utilities
+- `TemplateLibrary`: Layout template management
+
+**Views** (`Views/`)
+- `FirstRunSetupView`: Permission setup wizard (SwiftUI)
+- `PreferencesView`: Application preferences UI
+- `LayoutManagementWindow`: Layout management interface
+- `ZoneOverlayWindow`: Zone visualization overlay
+
+### Performance Optimizations
+
+- **Spatial Grid**: O(1) zone detection using 100px grid cells
+- **Zone Cache**: Pre-indexed zones by display ID
+- **Lazy Loading**: Layout previews loaded on demand
+- **Memory Efficient**: Minimal overhead for zone tracking
+
+### Testing
+
+- **Unit Tests**: Models, file management, zone detection
+- **Integration Tests**: File operations, permission workflows
+- **Performance Tests**: Zone detection benchmarks (1000 lookups)
+- **Coverage**: Core functionality fully tested
+
+## Next Steps
+
+1. Implement window drag monitoring with CGEventTap
+2. Create zone overlay visualization system
+3. Build window snapping engine with Accessibility API
+4. Design and implement preferences window
+5. Create layout management and zone editor UIs
 
 ## License
 
-FancyAreas is released under the MIT License. See [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-Built with:
-- Swift & SwiftUI
-- AppKit & Cocoa
-- Accessibility API
-- Combine Framework
-
-Inspired by:
-- PowerToys FancyZones (Windows)
-- Rectangle (macOS)
-- Magnet (macOS)
-
----
-
-**FancyAreas** - Window management for power users.
-
-Made with ❤️ for the Mac community.
+Copyright © 2025 FancyAreas. All rights reserved.

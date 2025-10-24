@@ -19,6 +19,7 @@ class WindowSnapController: WindowDragMonitorDelegate {
 
     private let dragMonitor = WindowDragMonitor.shared
     private let zoneManager = ZoneManager.shared
+    private let overlayManager = ZoneOverlayManager.shared
 
     private var currentZone: Zone?
     private var isOverlayVisible = false
@@ -117,20 +118,21 @@ class WindowSnapController: WindowDragMonitorDelegate {
     /// Shows the zone overlay
     private func showOverlay() {
         guard !isOverlayVisible else { return }
+        guard let layout = zoneManager.currentLayout else { return }
 
-        // TODO: Implement overlay window display (Task 9)
-        print("👁️ Showing zone overlay")
+        overlayManager.show(layout: layout)
         isOverlayVisible = true
+        print("👁️ Showing zone overlay")
     }
 
     /// Hides the zone overlay
     private func hideOverlay() {
         guard isOverlayVisible else { return }
 
-        // TODO: Implement overlay window hiding (Task 9)
-        print("👁️ Hiding zone overlay")
+        overlayManager.hide()
         isOverlayVisible = false
         currentZone = nil
+        print("👁️ Hiding zone overlay")
     }
 
     /// Detects which zone contains the point and highlights it
@@ -145,9 +147,11 @@ class WindowSnapController: WindowDragMonitorDelegate {
         if detectedZone?.id != currentZone?.id {
             currentZone = detectedZone
 
+            // Update overlay highlight
+            overlayManager.highlightZone(detectedZone)
+
             if let zone = detectedZone {
                 print("📍 Entered zone \(zone.zoneNumber)")
-                // TODO: Highlight zone in overlay (Task 9)
             } else {
                 print("📍 No zone at cursor")
             }

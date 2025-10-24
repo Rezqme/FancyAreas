@@ -24,6 +24,7 @@ struct FancyAreasApp: App {
 /// Application delegate handling app lifecycle and menu bar integration
 class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarController: MenuBarController?
+    var windowSnapController: WindowSnapController?
     var firstRunWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -41,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             // Check permissions and show reminder if needed
             let permissionsManager = PermissionsManager.shared
-            _ = permissionsManager.checkAllPermissions()
+            let permissions = permissionsManager.checkAllPermissions()
 
             if !permissionsManager.getMissingPermissions().isEmpty {
                 // Show reminder after a delay
@@ -49,13 +50,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     permissionsManager.showPermissionReminder()
                 }
             }
+
+            // Start window snap controller if permissions granted
+            if permissions[.accessibility] == true {
+                startWindowSnapController()
+            }
         }
 
         print("FancyAreas launched successfully")
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        windowSnapController?.stop()
         print("FancyAreas terminating")
+    }
+
+    /// Starts the window snap controller
+    private func startWindowSnapController() {
+        windowSnapController = WindowSnapController.shared
+        windowSnapController?.start()
+        print("✓ Window snapping enabled")
     }
 
 

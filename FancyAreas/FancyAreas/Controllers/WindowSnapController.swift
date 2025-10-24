@@ -20,6 +20,7 @@ class WindowSnapController: WindowDragMonitorDelegate {
     private let dragMonitor = WindowDragMonitor.shared
     private let zoneManager = ZoneManager.shared
     private let overlayManager = ZoneOverlayManager.shared
+    private let windowSnapper = WindowSnapper.shared
 
     private var currentZone: Zone?
     private var isOverlayVisible = false
@@ -163,13 +164,22 @@ class WindowSnapController: WindowDragMonitorDelegate {
     ///   - window: The window to snap
     ///   - zone: The zone to snap to
     private func snapWindow(_ window: AXUIElement, to zone: Zone) {
-        // TODO: Implement window snapping (Task 10)
-        print("📏 Snapping window to bounds: \(zone.bounds)")
+        print("📏 Snapping window to zone \(zone.zoneNumber)")
 
-        // For now, just log the action
-        let bounds = zone.bounds
-        print("   x: \(bounds.origin.x), y: \(bounds.origin.y)")
-        print("   width: \(bounds.size.width), height: \(bounds.size.height)")
+        // Get window info for debugging
+        let windowInfo = windowSnapper.getWindowInfo(window)
+        if let title = windowInfo["title"] as? String {
+            print("   Window: \(title)")
+        }
+
+        // Perform snap
+        let success = windowSnapper.snapWindow(window, to: zone, animated: true)
+
+        if success {
+            print("✓ Window snapped successfully")
+        } else {
+            print("⚠️ Window snap failed")
+        }
     }
 
     /// Gets the display ID for a point

@@ -472,8 +472,7 @@ class LayoutManagementViewModel: ObservableObject {
 
     func restoreApps() {
         guard let layout = selectedLayout else { return }
-        // TODO: Implement app restoration (Task 19)
-        showNotification(title: "Restore Apps", message: "App restoration coming soon...")
+        AppRestoration.shared.restoreApps(from: layout)
     }
 
     func editZones() {

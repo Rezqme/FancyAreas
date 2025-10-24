@@ -54,6 +54,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Start window snap controller if permissions granted
             if permissions[.accessibility] == true {
                 startWindowSnapController()
+
+                // Register keyboard shortcuts
+                KeyboardShortcutManager.shared.registerShortcuts()
+
+                // Restore last active layout
+                LayoutController.shared.restoreLastActiveLayout()
             }
         }
 

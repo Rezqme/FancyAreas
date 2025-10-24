@@ -18,6 +18,8 @@ class MenuBarController: NSObject {
     private var statusItem: NSStatusItem?
     private var cancellables = Set<AnyCancellable>()
     private var activeLayoutID: UUID?
+    private var preferencesWindow: NSWindow?
+    private var layoutManagementWindow: NSWindow?
 
     private let fileManager = LayoutFileManager.shared
 
@@ -262,17 +264,56 @@ class MenuBarController: NSObject {
     @objc private func editLayouts() {
         print("Opening layout management")
 
-        // TODO: Open layout management window
-        showNotification(title: "Edit Layouts",
-                        message: "Layout management window coming soon...")
+        // If window already exists, bring it to front
+        if let window = layoutManagementWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        // Create new layout management window
+        let layoutView = LayoutManagementWindow()
+        let hostingController = NSHostingController(rootView: layoutView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Layout Management"
+        window.styleMask = [.titled, .closable, .resizable]
+        window.setContentSize(NSSize(width: 900, height: 600))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+
+        // Store reference and set up cleanup
+        layoutManagementWindow = window
+        window.delegate = self
+
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func openPreferences() {
         print("Opening preferences")
 
-        // TODO: Open preferences window
-        showNotification(title: "Preferences",
-                        message: "Preferences window coming soon...")
+        // If window already exists, bring it to front
+        if let window = preferencesWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        // Create new preferences window
+        let preferencesView = PreferencesView()
+        let hostingController = NSHostingController(rootView: preferencesView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "FancyAreas Preferences"
+        window.styleMask = [.titled, .closable]
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+
+        // Store reference and set up cleanup
+        preferencesWindow = window
+        window.delegate = self
+
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func quitApp() {
@@ -305,5 +346,19 @@ class MenuBarController: NSObject {
         alert.alertStyle = .warning
         alert.addButton(withTitle: "OK")
         alert.runModal()
+    }
+}
+
+// MARK: - NSWindowDelegate
+
+extension MenuBarController: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        if let window = notification.object as? NSWindow {
+            if window == preferencesWindow {
+                preferencesWindow = nil
+            } else if window == layoutManagementWindow {
+                layoutManagementWindow = nil
+            }
+        }
     }
 }

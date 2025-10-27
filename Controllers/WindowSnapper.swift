@@ -9,6 +9,10 @@
 import Cocoa
 import ApplicationServices
 
+// Define AX attribute constants if not available
+private let kAXMinSizeAttribute = "AXMinSize" as CFString
+private let kAXMaxSizeAttribute = "AXMaxSize" as CFString
+
 /// Handles window resizing and positioning using Accessibility API
 /// Snaps windows to zone bounds with animation support
 class WindowSnapper {

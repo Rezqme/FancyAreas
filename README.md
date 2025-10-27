@@ -22,10 +22,10 @@ A powerful macOS window management application built with Swift and SwiftUI that
 ## Project Structure
 
 ```
-FancyAreas/
+FancyAreas-1/                    # Project root
+├── Package.swift                # Swift Package Manager configuration
 ├── FancyAreasApp.swift          # Main app entry point
 ├── Info.plist                   # App configuration
-├── Package.swift                # Swift Package Manager configuration
 ├── Models/                      # Data models
 │   ├── Layout.swift
 │   ├── Zone.swift
@@ -55,14 +55,14 @@ FancyAreas/
 │   ├── LaunchOnLoginManager.swift
 │   ├── AccessibilityHelper.swift
 │   └── TemplateLibrary.swift
-└── FancyAreasTests/            # Unit and integration tests
-    ├── ModelTests.swift
-    ├── LayoutFileManagerTests.swift
-    ├── ZoneManagerTests.swift
-    ├── PerformanceTests.swift
-    └── IntegrationTests.swift
-docs/                            # Documentation
-README.md                        # This file
+├── FancyAreasTests/            # Unit and integration tests
+│   ├── ModelTests.swift
+│   ├── LayoutFileManagerTests.swift
+│   ├── ZoneManagerTests.swift
+│   ├── PerformanceTests.swift
+│   └── IntegrationTests.swift
+├── docs/                        # Documentation
+└── README.md                    # This file
 ```
 
 ## Building

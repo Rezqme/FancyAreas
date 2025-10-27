@@ -38,8 +38,15 @@ class WindowSnapController: WindowDragMonitorDelegate {
 
     /// Starts the window snap controller
     func start() {
+        // Apply modifier keys from preferences
+        let prefs = PreferencesManager.shared
+        modifierKeyRequired = prefs.modifierKeys.reduce(CGEventFlags()) { result, key in
+            result.union(key.cgEventFlags)
+        }
+
+        let modifierNames = prefs.modifierKeys.map { $0.rawValue }.joined(separator: "+")
         dragMonitor.startMonitoring()
-        print("✓ WindowSnapController started")
+        print("✓ WindowSnapController started with modifiers: \(modifierNames)")
     }
 
     /// Stops the window snap controller
@@ -68,8 +75,8 @@ class WindowSnapController: WindowDragMonitorDelegate {
     }
 
     func windowDragMoved(window: AXUIElement, to location: CGPoint, modifierFlags: CGEventFlags) {
-        // Check if required modifier is pressed
-        let shouldShowOverlay = modifierFlags.contains(modifierKeyRequired)
+        // Check if ALL required modifiers are pressed
+        let shouldShowOverlay = areAllModifiersPressed(modifierFlags)
 
         if shouldShowOverlay {
             if !isOverlayVisible {
@@ -88,7 +95,7 @@ class WindowSnapController: WindowDragMonitorDelegate {
     func windowDragModifiersChanged(window: AXUIElement, at location: CGPoint, modifierFlags: CGEventFlags) {
         print("⌨️ Modifiers changed: \(modifierFlags.modifierDescription)")
 
-        let shouldShowOverlay = modifierFlags.contains(modifierKeyRequired)
+        let shouldShowOverlay = areAllModifiersPressed(modifierFlags)
 
         if shouldShowOverlay && !isOverlayVisible {
             showOverlay()
@@ -102,7 +109,7 @@ class WindowSnapController: WindowDragMonitorDelegate {
         print("🪟 Window drag ended at \(location)")
 
         // Check if we should snap the window to a zone
-        let shouldSnap = modifierFlags.contains(modifierKeyRequired)
+        let shouldSnap = areAllModifiersPressed(modifierFlags)
 
         if shouldSnap, let zone = currentZone {
             print("📍 Snapping window to zone \(zone.zoneNumber)")
@@ -112,6 +119,13 @@ class WindowSnapController: WindowDragMonitorDelegate {
         // Hide overlay
         hideOverlay()
         currentZone = nil
+    }
+
+    /// Checks if all required modifier keys are currently pressed
+    /// - Parameter flags: The current modifier flags
+    /// - Returns: True if all required modifiers are pressed
+    private func areAllModifiersPressed(_ flags: CGEventFlags) -> Bool {
+        return modifierKeyRequired.isSubset(of: flags)
     }
 
     // MARK: - Private Methods

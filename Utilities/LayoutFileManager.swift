@@ -62,6 +62,15 @@ class LayoutFileManager {
             throw FileManagerError.layoutLimitReached
         }
 
+        // If updating existing layout, delete old file first (in case name changed)
+        if existingLayoutIDs.contains(layout.id) {
+            let allFiles = try listLayoutFiles()
+            if let oldFileURL = allFiles.first(where: { $0.lastPathComponent.contains(layout.id.uuidString) }) {
+                try? FileManager.default.removeItem(at: oldFileURL)
+                print("✓ Removed old layout file: \(oldFileURL.lastPathComponent)")
+            }
+        }
+
         // Encode layout to JSON
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -122,20 +131,44 @@ class LayoutFileManager {
     func listLayouts() throws -> [Layout] {
         let fileURLs = try listLayoutFiles()
 
-        var layouts: [Layout] = []
+        var layoutsDict: [UUID: Layout] = [:]
+        var filesToDelete: [URL] = []
 
         for fileURL in fileURLs {
             do {
                 let layout = try loadLayout(from: fileURL)
-                layouts.append(layout)
+
+                // If we already have this layout ID, keep the newer one
+                if let existing = layoutsDict[layout.id] {
+                    if layout.modified > existing.modified {
+                        layoutsDict[layout.id] = layout
+                        // Mark old file for deletion
+                        if let oldURL = fileURLs.first(where: {
+                            $0.lastPathComponent.contains(existing.id.uuidString) && $0 != fileURL
+                        }) {
+                            filesToDelete.append(oldURL)
+                        }
+                    } else {
+                        // Current file is older, mark it for deletion
+                        filesToDelete.append(fileURL)
+                    }
+                } else {
+                    layoutsDict[layout.id] = layout
+                }
             } catch {
                 print("⚠️ Warning: Could not load layout from \(fileURL.lastPathComponent): \(error)")
                 // Continue loading other layouts
             }
         }
 
+        // Clean up duplicate files
+        for fileURL in filesToDelete {
+            try? FileManager.default.removeItem(at: fileURL)
+            print("✓ Cleaned up duplicate: \(fileURL.lastPathComponent)")
+        }
+
         // Sort by modified date (newest first)
-        return layouts.sorted { $0.modified > $1.modified }
+        return Array(layoutsDict.values).sorted { $0.modified > $1.modified }
     }
 
     /// Deletes a layout file

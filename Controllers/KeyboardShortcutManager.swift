@@ -22,7 +22,7 @@ class KeyboardShortcutManager {
     // Default shortcuts
     private let layoutPickerShortcut = KeyboardShortcut(
         name: "Open Layout Picker",
-        keyCode: kVK_ANSI_L,
+        keyCode: UInt16(kVK_ANSI_L),
         modifiers: [.command, .option, .shift],
         action: .openLayoutPicker
     )
@@ -153,17 +153,17 @@ class KeyboardShortcutManager {
     /// - Returns: The Carbon key code
     private func keyCodeForNumber(_ number: Int) -> UInt16 {
         switch number {
-        case 0: return kVK_ANSI_0
-        case 1: return kVK_ANSI_1
-        case 2: return kVK_ANSI_2
-        case 3: return kVK_ANSI_3
-        case 4: return kVK_ANSI_4
-        case 5: return kVK_ANSI_5
-        case 6: return kVK_ANSI_6
-        case 7: return kVK_ANSI_7
-        case 8: return kVK_ANSI_8
-        case 9: return kVK_ANSI_9
-        default: return kVK_ANSI_0
+        case 0: return UInt16(kVK_ANSI_0)
+        case 1: return UInt16(kVK_ANSI_1)
+        case 2: return UInt16(kVK_ANSI_2)
+        case 3: return UInt16(kVK_ANSI_3)
+        case 4: return UInt16(kVK_ANSI_4)
+        case 5: return UInt16(kVK_ANSI_5)
+        case 6: return UInt16(kVK_ANSI_6)
+        case 7: return UInt16(kVK_ANSI_7)
+        case 8: return UInt16(kVK_ANSI_8)
+        case 9: return UInt16(kVK_ANSI_9)
+        default: return UInt16(kVK_ANSI_0)
         }
     }
 }

@@ -42,12 +42,30 @@ class ZoneManager {
         zoneCache.removeAll()
         spatialIndex.removeAll()
 
+        // Calculate actual bounds from grid definitions if available
+        var zonesWithCalculatedBounds: [Zone] = []
         for zone in layout.zones {
+            var updatedZone = zone
+
+            // If zone has a grid definition, calculate its actual bounds
+            if zone.gridDefinition != nil {
+                if let display = layout.monitorConfiguration.displays.first(where: { $0.displayID == zone.displayID }) {
+                    updatedZone.bounds = zone.boundsFromGrid(gridSettings: layout.gridSettings, displayFrame: display.frame)
+                }
+            }
+
+            zonesWithCalculatedBounds.append(updatedZone)
+
             if zoneCache[zone.displayID] == nil {
                 zoneCache[zone.displayID] = []
             }
-            zoneCache[zone.displayID]?.append(zone)
+            zoneCache[zone.displayID]?.append(updatedZone)
         }
+
+        // Update active layout with calculated bounds
+        var updatedLayout = layout
+        updatedLayout.zones = zonesWithCalculatedBounds
+        activeLayout = updatedLayout
 
         // Build spatial index for each display
         for (displayID, zones) in zoneCache {

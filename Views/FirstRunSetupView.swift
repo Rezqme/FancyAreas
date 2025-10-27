@@ -11,7 +11,7 @@ import SwiftUI
 /// First-run setup view that guides users through granting necessary permissions
 struct FirstRunSetupView: View {
     @ObservedObject var permissionsManager = PermissionsManager.shared
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
 
     @State private var currentStep = 0
 
@@ -43,13 +43,27 @@ struct FirstRunSetupView: View {
                 )
             } else {
                 completionView
+                    .onAppear {
+                        // Automatically proceed to layout management after a brief delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            UserDefaults.standard.set(true, forKey: "hasCompletedFirstRun")
+                            presentationMode.wrappedValue.dismiss()
+
+                            // Open layout management after setup
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                if let appDelegate = NSApp.delegate as? AppDelegate {
+                                    appDelegate.menuBarController?.editLayouts()
+                                }
+                            }
+                        }
+                    }
             }
 
             Spacer()
 
             // Navigation buttons
             HStack {
-                if currentStep > 0 {
+                if currentStep > 0 && currentStep < 2 {
                     Button("Back") {
                         currentStep -= 1
                     }
@@ -70,13 +84,7 @@ struct FirstRunSetupView: View {
                             currentStep += 1
                         }
                     }
-                    .buttonStyle(.borderedProminent)
-                } else {
-                    Button("Get Started") {
-                        UserDefaults.standard.set(true, forKey: "hasCompletedFirstRun")
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(DefaultButtonStyle())
                 }
             }
         }
@@ -144,7 +152,7 @@ struct FirstRunSetupView: View {
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text("FancyAreas is ready to help you manage your windows.")
+            Text("Opening layout editor...")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

@@ -94,3 +94,45 @@ struct Display: Codable, Identifiable, Equatable {
         CGRect(origin: position, size: resolution)
     }
 }
+
+// MARK: - Monitor Detection
+
+#if canImport(AppKit)
+import AppKit
+
+extension MonitorConfiguration {
+    /// Detects and returns the current monitor configuration
+    /// - Returns: MonitorConfiguration with all connected displays
+    static func detectCurrentConfiguration() -> MonitorConfiguration {
+        var displays: [Display] = []
+
+        // Get all screens
+        let screens = NSScreen.screens
+
+        for (index, screen) in screens.enumerated() {
+            let screenID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID ?? CGDirectDisplayID(index)
+            let displayID = String(screenID)
+
+            // Get screen name
+            let name: String
+            if index == 0 {
+                name = "Primary Display"
+            } else {
+                name = "Display \(index + 1)"
+            }
+
+            let display = Display(
+                displayID: displayID,
+                name: name,
+                resolution: screen.frame.size,
+                position: screen.frame.origin,
+                isPrimary: screen == NSScreen.main
+            )
+
+            displays.append(display)
+        }
+
+        return MonitorConfiguration(displays: displays)
+    }
+}
+#endif

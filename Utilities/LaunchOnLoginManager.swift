@@ -8,10 +8,11 @@
 
 import Foundation
 import ServiceManagement
+import AppKit
 
 /// Manages the launch on login functionality
 /// Uses modern ServiceManagement API for macOS 13+ and fallback for older versions
-class LaunchOnLoginManager {
+class LaunchOnLoginManager: ObservableObject {
 
     // MARK: - Properties
 
@@ -20,27 +21,27 @@ class LaunchOnLoginManager {
     private let launchOnLoginKey = "launchOnLogin"
 
     /// Current launch on login status
-    var isEnabled: Bool {
-        get {
-            if #available(macOS 13.0, *) {
-                return SMAppService.mainApp.status == .enabled
-            } else {
-                return UserDefaults.standard.bool(forKey: launchOnLoginKey)
-            }
-        }
-        set {
-            if newValue {
-                enableLaunchOnLogin()
-            } else {
-                disableLaunchOnLogin()
-            }
+    @Published var isEnabled: Bool = false
+
+    private init() {
+        // Initialize from saved state
+        self.isEnabled = UserDefaults.standard.bool(forKey: launchOnLoginKey)
+    }
+
+    /// Updates the launch on login status
+    func setEnabled(_ enabled: Bool) {
+        isEnabled = enabled
+        if enabled {
+            enableLaunchOnLogin()
+        } else {
+            disableLaunchOnLogin()
         }
     }
 
     // MARK: - Public Methods
 
     /// Enables launch on login
-    func enableLaunchOnLogin() {
+    private func enableLaunchOnLogin() {
         if #available(macOS 13.0, *) {
             // Use modern ServiceManagement API
             do {
@@ -49,7 +50,7 @@ class LaunchOnLoginManager {
                 print("✓ Launch on login enabled")
             } catch {
                 print("⚠️ Failed to enable launch on login: \(error.localizedDescription)")
-                showError(message: "Failed to enable launch on login: \(error.localizedDescription)")
+                UserDefaults.standard.set(false, forKey: launchOnLoginKey)
             }
         } else {
             // Fallback for macOS 11-12
@@ -70,7 +71,7 @@ class LaunchOnLoginManager {
     }
 
     /// Disables launch on login
-    func disableLaunchOnLogin() {
+    private func disableLaunchOnLogin() {
         if #available(macOS 13.0, *) {
             // Use modern ServiceManagement API
             do {
@@ -79,7 +80,6 @@ class LaunchOnLoginManager {
                 print("✓ Launch on login disabled")
             } catch {
                 print("⚠️ Failed to disable launch on login: \(error.localizedDescription)")
-                showError(message: "Failed to disable launch on login: \(error.localizedDescription)")
             }
         } else {
             // Fallback for macOS 11-12
@@ -98,35 +98,15 @@ class LaunchOnLoginManager {
         }
     }
 
-    /// Checks the current launch on login status
-    /// - Returns: True if enabled, false otherwise
-    func checkStatus() -> Bool {
+    /// Refreshes the enabled status from system
+    func refreshStatus() {
         if #available(macOS 13.0, *) {
             let status = SMAppService.mainApp.status
-            return status == .enabled
-        } else {
-            return UserDefaults.standard.bool(forKey: launchOnLoginKey)
-        }
-    }
-
-    /// Returns a description of the current status
-    /// - Returns: Human-readable status string
-    func statusDescription() -> String {
-        if #available(macOS 13.0, *) {
-            switch SMAppService.mainApp.status {
-            case .enabled:
-                return "Enabled - FancyAreas will launch when you log in"
-            case .notRegistered:
-                return "Disabled - FancyAreas will not launch automatically"
-            case .requiresApproval:
-                return "Requires Approval - Check System Preferences > General > Login Items"
-            case .notFound:
-                return "Error - Launch helper not found"
-            @unknown default:
-                return "Unknown status"
+            let systemEnabled = (status == .enabled)
+            if isEnabled != systemEnabled {
+                isEnabled = systemEnabled
+                UserDefaults.standard.set(systemEnabled, forKey: launchOnLoginKey)
             }
-        } else {
-            return isEnabled ? "Enabled" : "Disabled"
         }
     }
 
@@ -143,15 +123,5 @@ class LaunchOnLoginManager {
             alert.addButton(withTitle: "OK")
             alert.runModal()
         }
-    }
-}
-
-// MARK: - ServiceManagement Extensions
-
-@available(macOS 13.0, *)
-extension SMAppService {
-    /// Convenience accessor for the main app service
-    static var mainApp: SMAppService {
-        SMAppService.mainApp
     }
 }

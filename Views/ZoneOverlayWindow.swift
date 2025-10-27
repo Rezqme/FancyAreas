@@ -35,11 +35,14 @@ class ZoneOverlayWindow: NSWindow {
             contentRect: frame,
             styleMask: [.borderless],
             backing: .buffered,
-            defer: false,
-            screen: screen
+            defer: false
         )
 
         setupWindow()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     // MARK: - Public Methods

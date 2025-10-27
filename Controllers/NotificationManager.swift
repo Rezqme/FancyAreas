@@ -182,11 +182,14 @@ private class ToastWindow: NSWindow {
             contentRect: frame,
             styleMask: [.borderless],
             backing: .buffered,
-            defer: false,
-            screen: screen
+            defer: false
         )
 
         setupWindow(message: message)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     private func setupWindow(message: String) {
@@ -197,7 +200,8 @@ private class ToastWindow: NSWindow {
         collectionBehavior = [.canJoinAllSpaces, .stationary]
 
         // Create content view
-        let contentView = NSView(frame: bounds)
+        let windowBounds = NSRect(x: 0, y: 0, width: frame.width, height: frame.height)
+        let contentView = NSView(frame: windowBounds)
         contentView.wantsLayer = true
         contentView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.85).cgColor
         contentView.layer?.cornerRadius = 10
@@ -206,7 +210,7 @@ private class ToastWindow: NSWindow {
         let label = NSTextField(labelWithString: message)
         label.textColor = .white
         label.alignment = .center
-        label.frame = bounds.insetBy(dx: 10, dy: 10)
+        label.frame = windowBounds.insetBy(dx: 10, dy: 10)
         label.font = .systemFont(ofSize: 13)
         contentView.addSubview(label)
 

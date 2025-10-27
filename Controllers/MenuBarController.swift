@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import SwiftUI
 import Combine
 
 /// Manages the menu bar icon and dropdown menu
@@ -261,15 +262,22 @@ class MenuBarController: NSObject {
                         message: "Layout editor coming soon...")
     }
 
-    @objc private func editLayouts() {
-        print("Opening layout management")
+    @objc func editLayouts() {
+        print("📱 Opening layout management")
+
+        // Temporarily change activation policy to regular to show windows properly
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
 
         // If window already exists, bring it to front
         if let window = layoutManagementWindow {
+            print("📱 Bringing existing window to front")
+            window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
             return
         }
+
+        print("📱 Creating new layout management window")
 
         // Create new layout management window
         let layoutView = LayoutManagementWindow()
@@ -277,25 +285,32 @@ class MenuBarController: NSObject {
 
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Layout Management"
-        window.styleMask = [.titled, .closable, .resizable]
+        window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         window.setContentSize(NSSize(width: 900, height: 600))
         window.center()
-        window.makeKeyAndOrderFront(nil)
 
         // Store reference and set up cleanup
         layoutManagementWindow = window
         window.delegate = self
 
-        NSApp.activate(ignoringOtherApps: true)
+        // Make window visible
+        window.orderFrontRegardless()
+        window.makeKeyAndOrderFront(nil)
+
+        print("📱 Window created and ordered front")
     }
 
     @objc private func openPreferences() {
         print("Opening preferences")
 
+        // Temporarily change activation policy to regular to show windows properly
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
         // If window already exists, bring it to front
         if let window = preferencesWindow {
+            window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
             return
         }
 
@@ -307,13 +322,13 @@ class MenuBarController: NSObject {
         window.title = "FancyAreas Preferences"
         window.styleMask = [.titled, .closable]
         window.center()
-        window.makeKeyAndOrderFront(nil)
 
         // Store reference and set up cleanup
         preferencesWindow = window
         window.delegate = self
 
-        NSApp.activate(ignoringOtherApps: true)
+        window.orderFrontRegardless()
+        window.makeKeyAndOrderFront(nil)
     }
 
     @objc private func quitApp() {
@@ -358,6 +373,11 @@ extension MenuBarController: NSWindowDelegate {
                 preferencesWindow = nil
             } else if window == layoutManagementWindow {
                 layoutManagementWindow = nil
+            }
+
+            // Return to accessory mode when all windows are closed
+            if preferencesWindow == nil && layoutManagementWindow == nil {
+                NSApp.setActivationPolicy(.accessory)
             }
         }
     }

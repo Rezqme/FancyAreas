@@ -11,7 +11,7 @@ import SwiftUI
 /// Main preferences window with tabbed interface
 struct PreferencesView: View {
     @StateObject private var preferencesManager = PreferencesManager.shared
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
         TabView {
@@ -40,23 +40,70 @@ struct GeneralPreferencesView: View {
     var body: some View {
         Form {
             // Launch Settings
-            Section("Launch Settings") {
+            Section(header: Text("Launch Settings")) {
                 Toggle("Launch on login", isOn: Binding(
                     get: { launchOnLoginManager.isEnabled },
-                    set: { launchOnLoginManager.isEnabled = $0 }
+                    set: { launchOnLoginManager.setEnabled($0) }
                 ))
                 .help("Automatically start FancyAreas when you log in")
+                .onAppear {
+                    launchOnLoginManager.refreshStatus()
+                }
             }
 
             // Zone Snapping Behavior
-            Section("Zone Snapping Behavior") {
-                Picker("Modifier key:", selection: $preferencesManager.modifierKey) {
-                    Text("Command (⌘)").tag(ModifierKey.command)
-                    Text("Option (⌥)").tag(ModifierKey.option)
-                    Text("Control (⌃)").tag(ModifierKey.control)
-                    Text("Shift (⇧)").tag(ModifierKey.shift)
+            Section(header: Text("Zone Snapping Behavior")) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Modifier keys:")
+                        .font(.headline)
+                    Text("Hold these keys while dragging to show zones")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Toggle("Command (⌘)", isOn: Binding(
+                        get: { preferencesManager.modifierKeys.contains(.command) },
+                        set: { isOn in
+                            if isOn {
+                                preferencesManager.modifierKeys.insert(.command)
+                            } else {
+                                preferencesManager.modifierKeys.remove(.command)
+                            }
+                        }
+                    ))
+
+                    Toggle("Option (⌥)", isOn: Binding(
+                        get: { preferencesManager.modifierKeys.contains(.option) },
+                        set: { isOn in
+                            if isOn {
+                                preferencesManager.modifierKeys.insert(.option)
+                            } else {
+                                preferencesManager.modifierKeys.remove(.option)
+                            }
+                        }
+                    ))
+
+                    Toggle("Control (⌃)", isOn: Binding(
+                        get: { preferencesManager.modifierKeys.contains(.control) },
+                        set: { isOn in
+                            if isOn {
+                                preferencesManager.modifierKeys.insert(.control)
+                            } else {
+                                preferencesManager.modifierKeys.remove(.control)
+                            }
+                        }
+                    ))
+
+                    Toggle("Shift (⇧)", isOn: Binding(
+                        get: { preferencesManager.modifierKeys.contains(.shift) },
+                        set: { isOn in
+                            if isOn {
+                                preferencesManager.modifierKeys.insert(.shift)
+                            } else {
+                                preferencesManager.modifierKeys.remove(.shift)
+                            }
+                        }
+                    ))
                 }
-                .help("Hold this key while dragging to show zones")
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Overlay opacity: \(Int(preferencesManager.overlayOpacity * 100))%")
@@ -77,7 +124,7 @@ struct GeneralPreferencesView: View {
             }
 
             // Window Behavior
-            Section("Window Behavior") {
+            Section(header: Text("Window Behavior")) {
                 Picker("Window to snap:", selection: $preferencesManager.windowPicker) {
                     Text("Front most window").tag(WindowPicker.frontMost)
                     Text("Window under cursor").tag(WindowPicker.underCursor)
@@ -86,7 +133,7 @@ struct GeneralPreferencesView: View {
             }
 
             // Grid Settings
-            Section("Default Grid Settings") {
+            Section(header: Text("Default Grid Settings")) {
                 HStack {
                     Text("Columns:")
                     Stepper("\(preferencesManager.defaultGridColumns)",
@@ -110,7 +157,7 @@ struct GeneralPreferencesView: View {
             }
 
             // iCloud Integration
-            Section("iCloud") {
+            Section(header: Text("iCloud")) {
                 Toggle("Sync preferences with iCloud", isOn: $preferencesManager.iCloudSyncEnabled)
                     .help("Sync settings across all your Macs")
 
@@ -125,14 +172,14 @@ struct GeneralPreferencesView: View {
             Section {
                 HStack {
                     Spacer()
-                    Button("Reset to Defaults", role: .destructive) {
+                    Button("Reset to Defaults") {
                         showResetConfirmation()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(BorderedButtonStyle())
+                    .foregroundColor(.red)
                 }
             }
         }
-        .formStyle(.grouped)
         .padding()
     }
 

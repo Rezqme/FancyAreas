@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import CoreGraphics
 
 /// Manages application preferences with UserDefaults and optional iCloud sync
 class PreferencesManager: ObservableObject {
@@ -20,8 +21,8 @@ class PreferencesManager: ObservableObject {
     private let ubiquitousStore = NSUbiquitousKeyValueStore.default
 
     // Published properties for SwiftUI binding
-    @Published var modifierKey: ModifierKey {
-        didSet { saveModifierKey() }
+    @Published var modifierKeys: Set<ModifierKey> {
+        didSet { saveModifierKeys() }
     }
 
     @Published var overlayOpacity: Double {
@@ -59,7 +60,7 @@ class PreferencesManager: ObservableObject {
     // MARK: - Keys
 
     private enum Keys {
-        static let modifierKey = "modifierKey"
+        static let modifierKeys = "modifierKeys"
         static let overlayOpacity = "overlayOpacity"
         static let showZoneNumbers = "showZoneNumbers"
         static let animationSpeed = "animationSpeed"
@@ -74,7 +75,12 @@ class PreferencesManager: ObservableObject {
 
     private init() {
         // Load values or use defaults
-        self.modifierKey = ModifierKey(rawValue: defaults.string(forKey: Keys.modifierKey) ?? "") ?? .command
+        if let keysData = defaults.data(forKey: Keys.modifierKeys),
+           let keysArray = try? JSONDecoder().decode([String].self, from: keysData) {
+            self.modifierKeys = Set(keysArray.compactMap { ModifierKey(rawValue: $0) })
+        } else {
+            self.modifierKeys = [.command, .option, .control] // Default: Cmd+Opt+Ctrl
+        }
         self.overlayOpacity = defaults.object(forKey: Keys.overlayOpacity) as? Double ?? 0.3
         self.showZoneNumbers = defaults.object(forKey: Keys.showZoneNumbers) as? Bool ?? true
         self.animationSpeed = AnimationSpeed(rawValue: defaults.string(forKey: Keys.animationSpeed) ?? "") ?? .normal
@@ -100,10 +106,15 @@ class PreferencesManager: ObservableObject {
 
     // MARK: - Save Methods
 
-    private func saveModifierKey() {
-        defaults.set(modifierKey.rawValue, forKey: Keys.modifierKey)
-        syncToICloudIfEnabled(key: Keys.modifierKey, value: modifierKey.rawValue)
-        applyModifierKeyChange()
+    private func saveModifierKeys() {
+        let keysArray = Array(modifierKeys.map { $0.rawValue })
+        if let keysData = try? JSONEncoder().encode(keysArray) {
+            defaults.set(keysData, forKey: Keys.modifierKeys)
+            if let keysString = String(data: keysData, encoding: .utf8) {
+                syncToICloudIfEnabled(key: Keys.modifierKeys, value: keysString)
+            }
+        }
+        applyModifierKeysChange()
     }
 
     private func saveOverlayOpacity() {
@@ -154,9 +165,11 @@ class PreferencesManager: ObservableObject {
 
     // MARK: - Apply Changes
 
-    private func applyModifierKeyChange() {
-        // Update WindowSnapController with new modifier key
-        let flags = modifierKey.cgEventFlags
+    private func applyModifierKeysChange() {
+        // Update WindowSnapController with new modifier keys
+        let flags = modifierKeys.reduce(CGEventFlags()) { result, key in
+            result.union(key.cgEventFlags)
+        }
         WindowSnapController.shared.setRequiredModifier(flags)
     }
 
@@ -195,7 +208,10 @@ class PreferencesManager: ObservableObject {
     }
 
     private func syncAllToICloud() {
-        syncToICloudIfEnabled(key: Keys.modifierKey, value: modifierKey.rawValue)
+        if let keysData = try? JSONEncoder().encode(Array(modifierKeys.map { $0.rawValue })),
+           let keysString = String(data: keysData, encoding: .utf8) {
+            syncToICloudIfEnabled(key: Keys.modifierKeys, value: keysString)
+        }
         syncToICloudIfEnabled(key: Keys.overlayOpacity, value: overlayOpacity)
         syncToICloudIfEnabled(key: Keys.showZoneNumbers, value: showZoneNumbers)
         syncToICloudIfEnabled(key: Keys.animationSpeed, value: animationSpeed.rawValue)
@@ -206,8 +222,10 @@ class PreferencesManager: ObservableObject {
     }
 
     private func syncFromICloud() {
-        if let value = ubiquitousStore.string(forKey: Keys.modifierKey) {
-            modifierKey = ModifierKey(rawValue: value) ?? .command
+        if let value = ubiquitousStore.string(forKey: Keys.modifierKeys),
+           let keysData = value.data(using: .utf8),
+           let keysArray = try? JSONDecoder().decode([String].self, from: keysData) {
+            modifierKeys = Set(keysArray.compactMap { ModifierKey(rawValue: $0) })
         }
         if let value = ubiquitousStore.object(forKey: Keys.overlayOpacity) as? Double {
             overlayOpacity = value
@@ -241,7 +259,7 @@ class PreferencesManager: ObservableObject {
 
     /// Resets all preferences to default values
     func resetToDefaults() {
-        modifierKey = .command
+        modifierKeys = [.command, .option, .control]
         overlayOpacity = 0.3
         showZoneNumbers = true
         animationSpeed = .normal

@@ -49,6 +49,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     permissionsManager.showPermissionReminder()
                 }
+            } else {
+                // All permissions granted - show layout management window
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.menuBarController?.editLayouts()
+                }
             }
 
             // Start window snap controller if permissions granted

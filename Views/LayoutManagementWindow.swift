@@ -11,7 +11,8 @@ import SwiftUI
 /// Main layout management window with three-panel design
 struct LayoutManagementWindow: View {
     @StateObject private var viewModel = LayoutManagementViewModel()
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
+    @State private var editingLayoutName: String = ""
 
     var body: some View {
         HSplitView {
@@ -103,11 +104,20 @@ struct LayoutManagementWindow: View {
                             Text("Layout Name")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            TextField("Name", text: Binding(
-                                get: { layout.layoutName },
-                                set: { viewModel.updateLayoutName($0) }
-                            ))
+                            TextField("Name", text: $editingLayoutName, onCommit: {
+                                if !editingLayoutName.isEmpty {
+                                    viewModel.updateLayoutName(editingLayoutName)
+                                }
+                            })
                             .textFieldStyle(.roundedBorder)
+                            .onAppear {
+                                editingLayoutName = layout.layoutName
+                            }
+                            .onChange(of: viewModel.selectedLayoutID) { _ in
+                                if let newLayout = viewModel.selectedLayout {
+                                    editingLayoutName = newLayout.layoutName
+                                }
+                            }
                         }
 
                         Divider()
@@ -134,17 +144,37 @@ struct LayoutManagementWindow: View {
                             Text("Monitors")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text("\(layout.monitorConfiguration.displayCount) display(s)")
-                                .font(.body)
-                        }
 
-                        // Zone Count
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Zones")
+                            ForEach(layout.monitorConfiguration.displays, id: \.displayID) { display in
+                                let displayZones = layout.zones.filter { $0.displayID == display.displayID }
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(display.name)
+                                            .font(.body)
+                                        Text("\(displayZones.count) zone(s)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    if display.isPrimary {
+                                        Text("Primary")
+                                            .font(.caption)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.blue.opacity(0.2))
+                                            .cornerRadius(4)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(Color.secondary.opacity(0.1))
+                                .cornerRadius(6)
+                            }
+
+                            Text("Total: \(layout.zones.count) zone(s)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text("\(layout.zones.count) zone(s)")
-                                .font(.body)
+                                .padding(.top, 4)
                         }
 
                         Divider()
@@ -157,17 +187,90 @@ struct LayoutManagementWindow: View {
                             HStack {
                                 Text("Columns:")
                                 Spacer()
-                                Text("\(layout.gridSettings.columns)")
+                                Stepper("\(layout.gridSettings.columns)",
+                                       value: Binding(
+                                           get: { layout.gridSettings.columns },
+                                           set: { viewModel.updateGridColumns($0) }
+                                       ),
+                                       in: 1...24)
                             }
                             HStack {
                                 Text("Rows:")
                                 Spacer()
-                                Text("\(layout.gridSettings.rows)")
+                                Stepper("\(layout.gridSettings.rows)",
+                                       value: Binding(
+                                           get: { layout.gridSettings.rows },
+                                           set: { viewModel.updateGridRows($0) }
+                                       ),
+                                       in: 1...16)
                             }
                             HStack {
                                 Text("Spacing:")
                                 Spacer()
-                                Text("\(layout.gridSettings.spacing)px")
+                                Stepper("\(layout.gridSettings.spacing)px",
+                                       value: Binding(
+                                           get: { layout.gridSettings.spacing },
+                                           set: { viewModel.updateGridSpacing($0) }
+                                       ),
+                                       in: 0...32)
+                            }
+                        }
+
+                        Divider()
+
+                        // Zones
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Zones")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button(action: {
+                                    viewModel.addZone()
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Zone")
+                                }
+                                .buttonStyle(BorderedButtonStyle())
+                            }
+
+                            ForEach(layout.zones) { zone in
+                                HStack(spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Zone \(zone.zoneNumber)")
+                                            .font(.body)
+                                            .fontWeight(.medium)
+                                        if let grid = zone.gridDefinition {
+                                            Text("Cols \(grid.startColumn)-\(grid.endColumn), Rows \(grid.startRow)-\(grid.endRow)")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        Text("Display: \(layout.monitorConfiguration.displays.first(where: { $0.displayID == zone.displayID })?.name ?? "Unknown")")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    Button(action: {
+                                        viewModel.editZoneGrid(zone)
+                                    }) {
+                                        Image(systemName: "slider.horizontal.3")
+                                    }
+                                    .buttonStyle(BorderlessButtonStyle())
+                                    .help("Edit zone grid definition")
+
+                                    Button(action: {
+                                        viewModel.removeZone(zone)
+                                    }) {
+                                        Image(systemName: "trash")
+                                    }
+                                    .buttonStyle(BorderlessButtonStyle())
+                                    .foregroundColor(.red)
+                                    .help("Remove zone")
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 8)
+                                .background(Color.secondary.opacity(0.1))
+                                .cornerRadius(6)
                             }
                         }
 
@@ -178,21 +281,21 @@ struct LayoutManagementWindow: View {
                             Button("Apply Layout") {
                                 viewModel.applyLayout()
                             }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(DefaultButtonStyle())
                             .frame(maxWidth: .infinity)
 
                             if layout.layoutType == .zonesAndApps {
                                 Button("Restore Apps") {
                                     viewModel.restoreApps()
                                 }
-                                .buttonStyle(.bordered)
+                                .buttonStyle(BorderedButtonStyle())
                                 .frame(maxWidth: .infinity)
                             }
 
                             Button("Edit Zones") {
                                 viewModel.editZones()
                             }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(BorderedButtonStyle())
                             .frame(maxWidth: .infinity)
 
                             Divider()
@@ -200,13 +303,14 @@ struct LayoutManagementWindow: View {
                             Button("Duplicate") {
                                 viewModel.duplicateLayout()
                             }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(BorderedButtonStyle())
                             .frame(maxWidth: .infinity)
 
-                            Button("Delete", role: .destructive) {
+                            Button("Delete") {
                                 viewModel.deleteLayout()
                             }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(BorderedButtonStyle())
+                            .foregroundColor(.red)
                             .frame(maxWidth: .infinity)
                         }
                     }
@@ -374,23 +478,19 @@ class LayoutManagementViewModel: ObservableObject {
             return
         }
 
-        // Create new layout with default settings
-        let display = Display(
-            displayID: "primary",
-            name: "Primary Display",
-            resolution: CGSize(width: 1920, height: 1080),
-            position: CGPoint(x: 0, y: 0),
-            isPrimary: true
-        )
+        // Detect current monitor configuration
+        let monitorConfig = MonitorConfiguration.detectCurrentConfiguration()
+        let gridSettings = PreferencesManager.shared.defaultGridSettings
 
-        let defaultZones = createDefaultZones()
+        // Create default zones for all displays
+        let defaultZones = createDefaultZones(for: monitorConfig, gridSettings: gridSettings)
 
         let newLayout = Layout(
             layoutName: "Layout \(layouts.count + 1)",
             layoutType: .zonesOnly,
-            monitorConfiguration: MonitorConfiguration(displays: [display]),
+            monitorConfiguration: monitorConfig,
             zones: defaultZones,
-            gridSettings: PreferencesManager.shared.defaultGridSettings
+            gridSettings: gridSettings
         )
 
         do {
@@ -402,12 +502,36 @@ class LayoutManagementViewModel: ObservableObject {
         }
     }
 
-    private func createDefaultZones() -> [Zone] {
-        // Create 2-column layout by default
-        return [
-            Zone(zoneNumber: 1, displayID: "primary", bounds: CGRect(x: 0, y: 0, width: 960, height: 1080)),
-            Zone(zoneNumber: 2, displayID: "primary", bounds: CGRect(x: 960, y: 0, width: 960, height: 1080))
-        ]
+    private func createDefaultZones(for monitorConfig: MonitorConfiguration, gridSettings: GridSettings) -> [Zone] {
+        var zones: [Zone] = []
+        var zoneNumber = 1
+
+        // Create 2 zones (left/right split) for each display
+        for display in monitorConfig.displays {
+            let leftGrid = GridDefinition.leftHalf(columns: gridSettings.columns, rows: gridSettings.rows)
+            let rightGrid = GridDefinition.rightHalf(columns: gridSettings.columns, rows: gridSettings.rows)
+
+            let leftZone = Zone(
+                zoneNumber: zoneNumber,
+                displayID: display.displayID,
+                bounds: CGRect(x: 0, y: 0, width: 100, height: 100), // Will be calculated from grid
+                gridDefinition: leftGrid
+            )
+            zoneNumber += 1
+
+            let rightZone = Zone(
+                zoneNumber: zoneNumber,
+                displayID: display.displayID,
+                bounds: CGRect(x: 0, y: 0, width: 100, height: 100), // Will be calculated from grid
+                gridDefinition: rightGrid
+            )
+            zoneNumber += 1
+
+            zones.append(leftZone)
+            zones.append(rightZone)
+        }
+
+        return zones
     }
 
     func updateLayoutName(_ name: String) {
@@ -419,6 +543,24 @@ class LayoutManagementViewModel: ObservableObject {
     func updateLayoutType(_ type: Layout.LayoutType) {
         guard var layout = selectedLayout else { return }
         layout.layoutType = type
+        saveLayout(layout)
+    }
+
+    func updateGridColumns(_ columns: Int) {
+        guard var layout = selectedLayout else { return }
+        layout.gridSettings.columns = columns
+        saveLayout(layout)
+    }
+
+    func updateGridRows(_ rows: Int) {
+        guard var layout = selectedLayout else { return }
+        layout.gridSettings.rows = rows
+        saveLayout(layout)
+    }
+
+    func updateGridSpacing(_ spacing: Int) {
+        guard var layout = selectedLayout else { return }
+        layout.gridSettings.spacing = spacing
         saveLayout(layout)
     }
 
@@ -475,9 +617,148 @@ class LayoutManagementViewModel: ObservableObject {
         AppRestoration.shared.restoreApps(from: layout)
     }
 
+    func addZone() {
+        guard var layout = selectedLayout else { return }
+
+        // Get the first display (or primary display)
+        guard let display = layout.monitorConfiguration.displays.first else {
+            showAlert(title: "Error", message: "No displays available")
+            return
+        }
+
+        // Create a new zone number
+        let maxZoneNumber = layout.zones.map { $0.zoneNumber }.max() ?? 0
+        let newZoneNumber = maxZoneNumber + 1
+
+        // Create a default grid definition (quarter of the screen in top-left)
+        let columns = layout.gridSettings.columns
+        let rows = layout.gridSettings.rows
+        let gridDef = GridDefinition(
+            startColumn: 1,
+            endColumn: columns / 2,
+            startRow: 1,
+            endRow: rows / 2
+        )
+
+        let newZone = Zone(
+            zoneNumber: newZoneNumber,
+            displayID: display.displayID,
+            bounds: CGRect(x: 0, y: 0, width: 100, height: 100), // Will be calculated from grid
+            gridDefinition: gridDef
+        )
+
+        layout.zones.append(newZone)
+        saveLayout(layout)
+    }
+
+    func removeZone(_ zone: Zone) {
+        guard var layout = selectedLayout else { return }
+
+        // Confirm deletion
+        let alert = NSAlert()
+        alert.messageText = "Remove Zone \(zone.zoneNumber)?"
+        alert.informativeText = "This cannot be undone."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            layout.zones.removeAll { $0.id == zone.id }
+            saveLayout(layout)
+        }
+    }
+
+    func editZoneGrid(_ zone: Zone) {
+        guard var layout = selectedLayout else { return }
+        guard let zoneIndex = layout.zones.firstIndex(where: { $0.id == zone.id }) else { return }
+
+        // Show a dialog to edit the grid definition
+        let alert = NSAlert()
+        alert.messageText = "Edit Zone \(zone.zoneNumber) Grid"
+        alert.informativeText = "Define the zone in terms of grid cells (1-based indices)"
+        alert.alertStyle = .informational
+
+        // Create text fields for grid definition
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 120))
+
+        let startColLabel = NSTextField(labelWithString: "Start Column:")
+        startColLabel.frame = NSRect(x: 0, y: 90, width: 100, height: 20)
+        view.addSubview(startColLabel)
+
+        let startColField = NSTextField(frame: NSRect(x: 110, y: 90, width: 50, height: 22))
+        startColField.integerValue = zone.gridDefinition?.startColumn ?? 1
+        view.addSubview(startColField)
+
+        let endColLabel = NSTextField(labelWithString: "End Column:")
+        endColLabel.frame = NSRect(x: 0, y: 60, width: 100, height: 20)
+        view.addSubview(endColLabel)
+
+        let endColField = NSTextField(frame: NSRect(x: 110, y: 60, width: 50, height: 22))
+        endColField.integerValue = zone.gridDefinition?.endColumn ?? layout.gridSettings.columns
+        view.addSubview(endColField)
+
+        let startRowLabel = NSTextField(labelWithString: "Start Row:")
+        startRowLabel.frame = NSRect(x: 0, y: 30, width: 100, height: 20)
+        view.addSubview(startRowLabel)
+
+        let startRowField = NSTextField(frame: NSRect(x: 110, y: 30, width: 50, height: 22))
+        startRowField.integerValue = zone.gridDefinition?.startRow ?? 1
+        view.addSubview(startRowField)
+
+        let endRowLabel = NSTextField(labelWithString: "End Row:")
+        endRowLabel.frame = NSRect(x: 0, y: 0, width: 100, height: 20)
+        view.addSubview(endRowLabel)
+
+        let endRowField = NSTextField(frame: NSRect(x: 110, y: 0, width: 50, height: 22))
+        endRowField.integerValue = zone.gridDefinition?.endRow ?? layout.gridSettings.rows
+        view.addSubview(endRowField)
+
+        alert.accessoryView = view
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            let startCol = max(1, min(layout.gridSettings.columns, startColField.integerValue))
+            let endCol = max(startCol, min(layout.gridSettings.columns, endColField.integerValue))
+            let startRow = max(1, min(layout.gridSettings.rows, startRowField.integerValue))
+            let endRow = max(startRow, min(layout.gridSettings.rows, endRowField.integerValue))
+
+            let gridDef = GridDefinition(
+                startColumn: startCol,
+                endColumn: endCol,
+                startRow: startRow,
+                endRow: endRow
+            )
+
+            layout.zones[zoneIndex].gridDefinition = gridDef
+            saveLayout(layout)
+        }
+    }
+
     func editZones() {
-        // TODO: Open zone editor (Task 16)
-        showNotification(title: "Edit Zones", message: "Zone editor coming soon...")
+        guard let layout = selectedLayout else { return }
+
+        // For now, just show a simple info dialog
+        // TODO: Implement full interactive zone editor
+        showNotification(
+            title: "Zone Editor",
+            message: "Interactive zone editing will be available in a future update. For now, you can adjust grid settings to change zone layout."
+        )
+    }
+
+    func updateZones(_ zones: [Zone]) {
+        guard var layout = selectedLayout else { return }
+
+        // Replace zones for the edited display
+        for zone in zones {
+            if let index = layout.zones.firstIndex(where: { $0.id == zone.id }) {
+                layout.zones[index] = zone
+            } else {
+                layout.zones.append(zone)
+            }
+        }
+
+        saveLayout(layout)
     }
 
     private func saveLayout(_ layout: Layout) {

@@ -121,7 +121,7 @@ class AppRestoration {
 
         // Find the right window (by title if specified, otherwise first window)
         let targetWindow: AXUIElement
-        if let title = windowTitle, !title.isEmpty {
+        if let title = matchingTitle, !title.isEmpty {
             targetWindow = windows.first { window in
                 var titleRef: CFTypeRef?
                 guard AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef) == .success,

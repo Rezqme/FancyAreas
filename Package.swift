@@ -21,9 +21,15 @@ let package = Package(
         .executableTarget(
             name: "FancyAreas",
             dependencies: [],
-            path: "FancyAreas",
-            resources: [
-                .process("Resources")
+            path: ".",
+            exclude: [
+                "FancyAreasTests",
+                "docs",
+                ".build",
+                "FancyAreas",
+                "README.md",
+                "Info.plist",
+                ".gitignore"
             ]
         ),
         .testTarget(
